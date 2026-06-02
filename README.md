@@ -20,6 +20,13 @@ You can also build from Terminal with:
 swift build
 ```
 
+To build a normal macOS app bundle you can open from Finder:
+
+```bash
+./scripts/build-app.sh
+open dist/Hotblock.app
+```
+
 ## Push to GitHub
 
 If you have already created an empty GitHub repository, connect it with:

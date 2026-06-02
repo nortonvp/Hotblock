@@ -22,8 +22,12 @@
     <string>1</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
+    <key>LSUIElement</key>
+    <true/>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Hotblock needs Automation access to read the active browser tab and warn you when you open a blocked website.</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
 </dict>

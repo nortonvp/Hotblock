@@ -1,12 +1,18 @@
 # Hotblock
 
-Hotblock is a native macOS focus timer built with SwiftUI and stored in GitHub-friendly project files.
+Hotblock is a native macOS focus app for one simple job:
+
+- add websites to a list
+- click `Start`
+- when one of those websites is visited, play a voice warning telling you to focus
 
 ## What is in this repo
 
-- A native macOS app target written in Swift
-- A real first-pass focus timer UI with start, pause, reset, and duration controls
-- A GitHub Actions workflow that builds the app on macOS
+- A native macOS SwiftUI app
+- A simple website list UI
+- Start and stop blocking state
+- Spoken warning behavior with automatic browser checking
+- A script that builds an openable `.app` bundle
 
 ## Open the app locally
 
@@ -27,19 +33,8 @@ To build a normal macOS app bundle you can open from Finder:
 open dist/Hotblock.app
 ```
 
-## Push to GitHub
+## Current scope
 
-If you have already created an empty GitHub repository, connect it with:
+The app now supports the core flow and checks the frontmost Safari, Chrome, Brave, or Arc tab while blocking is active.
 
-```bash
-git remote add origin https://github.com/YOUR_USERNAME/hotblock.git
-git add .
-git commit -m "Initial macOS app starter"
-git push -u origin main
-```
-
-## Good next steps
-
-- Save session history with `AppStorage` or a local file
-- Add notifications when a focus block finishes
-- Add an app icon and signing later in Xcode
+On first use, macOS may ask you to allow Hotblock to control the browser through Automation permissions.

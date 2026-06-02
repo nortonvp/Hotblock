@@ -1,11 +1,11 @@
 # Hotblock
 
-Hotblock is a minimal macOS app starter built with SwiftUI and stored in GitHub-friendly project files.
+Hotblock is a native macOS focus timer built with SwiftUI and stored in GitHub-friendly project files.
 
 ## What is in this repo
 
 - A native macOS app target written in Swift
-- A simple starter window with a couple of working actions
+- A real first-pass focus timer UI with start, pause, reset, and duration controls
 - A GitHub Actions workflow that builds the app on macOS
 
 ## Open the app locally
@@ -33,6 +33,6 @@ git push -u origin main
 
 ## Good next steps
 
-- Replace the starter UI with your real app idea
-- Add app storage or file handling
+- Save session history with `AppStorage` or a local file
+- Add notifications when a focus block finishes
 - Add an app icon and signing later in Xcode

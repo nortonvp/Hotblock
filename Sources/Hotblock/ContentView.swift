@@ -44,13 +44,21 @@ struct ContentView: View {
                 }
                 .keyboardShortcut(.defaultAction)
 
-                Menu("Presets") {
+                Menu {
                     ForEach(WebsitePreset.allCases) { preset in
-                        Button(preset.rawValue) {
+                        Button {
                             selectedPreset = preset
+                        } label: {
+                            Label(
+                                "\(preset.rawValue) (\(preset.websites.count))",
+                                systemImage: preset.systemImage
+                            )
                         }
                     }
+                } label: {
+                    Label("Presets", systemImage: "square.grid.2x2")
                 }
+                .help("Add a built-in group of websites")
             }
 
             if !model.feedback.isEmpty {
@@ -133,10 +141,10 @@ private struct PresetConfirmationView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("\(preset.rawValue) Preset")
+            Label("\(preset.rawValue) Preset", systemImage: preset.systemImage)
                 .font(.headline)
 
-            Text("Choose the websites to add to your blocked list.")
+            Text("Choose from \(preset.websites.count) websites to add to your blocked list.")
                 .foregroundStyle(.secondary)
 
             HStack {
@@ -172,7 +180,7 @@ private struct PresetConfirmationView: View {
                 Button("Cancel") {
                     dismiss()
                 }
-                Button("Add") {
+                Button("Add Selected") {
                     model.addWebsites(selectedWebsites)
                     dismiss()
                 }

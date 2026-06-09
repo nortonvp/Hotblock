@@ -7,6 +7,14 @@ enum WebsitePreset: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    var systemImage: String {
+        switch self {
+        case .news: "newspaper"
+        case .socialMedia: "person.2"
+        case .entertainment: "play.rectangle"
+        }
+    }
+
     var websites: [String] {
         let domains: [String]
         switch self {

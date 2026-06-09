@@ -58,6 +58,8 @@ struct ContentView: View {
                 } label: {
                     Image(systemName: "square.grid.2x2")
                 }
+                .frame(width: 24)
+                .fixedSize()
                 .help("Presets: add a built-in group of websites")
             }
 

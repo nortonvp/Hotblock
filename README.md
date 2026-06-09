@@ -23,6 +23,5 @@ swift build
 ## Important Prototype Limit
 
 This repository currently uses a user LaunchAgent and AppleScript adapters.
-The signed privileged helper, browser extensions, and automatic updater
-described in [the product specification](docs/PRODUCT_SPEC.md) require a full
-Xcode project, signing identity, and distribution setup.
+A signed privileged helper, browser extensions, and automatic updater require
+a full Xcode project, signing identity, and distribution setup.

@@ -5,6 +5,11 @@ and Hotblock closes blocked browser tabs while telling you to focus.
 
 Supported browsers: Safari, Google Chrome, Brave Browser, and Arc.
 
+## Download
+
+Visit the [Hotblock website](https://nortonvp.github.io/Hotblock/) or download
+the [latest release](https://github.com/nortonvp/Hotblock/releases/latest/download/Hotblock.zip).
+
 ## Requirements
 
 - macOS 14 or newer

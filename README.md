@@ -1,40 +1,28 @@
 # Hotblock
 
-Hotblock is a native macOS focus app for one simple job:
+Hotblock is a native strict website blocker for macOS. Add domains, start a
+strict session, and Hotblock closes matching browser tabs while playing
+increasingly harsh spoken focus warnings.
 
-- add websites to a list
-- click `Start`
-- when one of those websites is visited, play a voice warning telling you to focus
+The current command-line-tools build supports Safari, Google Chrome, Brave
+Browser, and Arc through macOS Automation.
 
-## What is in this repo
-
-- A native macOS SwiftUI app
-- A simple website list UI
-- Start and stop blocking state
-- Spoken warning behavior with automatic browser checking
-- A script that builds an openable `.app` bundle
-
-## Open the app locally
-
-1. Install Xcode from the Mac App Store.
-2. Open this folder in Xcode.
-3. Run the `Hotblock` target.
-
-You can also build from Terminal with:
-
-```bash
-swift build
-```
-
-To build a normal macOS app bundle you can open from Finder:
+## Build and Open
 
 ```bash
 ./scripts/build-app.sh
 open dist/Hotblock.app
 ```
 
-## Current scope
+The normal build check is:
 
-The app now supports the core flow and checks the frontmost Safari, Chrome, Brave, or Arc tab while blocking is active.
+```bash
+swift build
+```
 
-On first use, macOS may ask you to allow Hotblock to control the browser through Automation permissions.
+## Important Prototype Limit
+
+This repository currently uses a user LaunchAgent and AppleScript adapters.
+The signed privileged helper, browser extensions, and automatic updater
+described in [the product specification](docs/PRODUCT_SPEC.md) require a full
+Xcode project, signing identity, and distribution setup.

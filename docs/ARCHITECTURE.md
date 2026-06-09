@@ -1,20 +1,18 @@
 # Hotblock Architecture
 
-Hotblock is now scoped to a very simple flow:
+The current Swift Package is a functional prototype organized around small,
+replaceable components:
 
-1. The user adds websites to a list.
-2. The user presses Start.
-3. When a blocked website is visited, Hotblock speaks a focus warning.
+- `HotblockModel` owns UI state and strict-session rules.
+- `PersistenceStore` migrates legacy defaults and persists the complete state.
+- `BrowserAutomation` detects, reads, and closes supported browser tabs.
+- `MonitoringService` polls the frontmost browser and reports blocked attempts.
+- `SpeechService` plays English spoken warnings.
+- `NotificationService` reports permission and enforcement failures.
+- `BackgroundProtection` installs the temporary user LaunchAgent watchdog.
+- `HotblockAppDelegate` owns exactly one AppKit window and one status item.
 
-## Current app shell
-
-The native macOS app currently covers:
-
-- Website list management
-- Start and stop blocking state
-- Spoken warning behavior
-- A test action that simulates visiting a blocked site
-
-## Next implementation step
-
-To detect real website visits automatically in Safari, this project should add a Safari web extension target. Apple documents Safari web extensions as the way to extend Safari behavior and block or react to web content in Safari.
+The production architecture and its signing requirements are defined in
+`PRODUCT_SPEC.md`. The LaunchAgent and AppleScript adapters are intentionally
+isolated so they can be replaced by a privileged helper and browser extensions
+without rewriting the domain model or interface.

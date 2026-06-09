@@ -20,7 +20,9 @@ mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 
 cp "$BUILD_DIR/$APP_NAME" "$MACOS_DIR/$APP_NAME"
 cp "$ROOT_DIR/App/Info.plist" "$CONTENTS_DIR/Info.plist"
+cp "$ROOT_DIR/scripts/hotblock-watchdog.sh" "$RESOURCES_DIR/hotblock-watchdog.sh"
 chmod +x "$MACOS_DIR/$APP_NAME"
+chmod +x "$RESOURCES_DIR/hotblock-watchdog.sh"
 
 if command -v codesign >/dev/null 2>&1; then
     codesign --force --deep --sign - "$APP_DIR" >/dev/null

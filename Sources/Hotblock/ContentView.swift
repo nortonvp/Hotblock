@@ -1,204 +1,433 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var store = FocusBlockerStore.shared
-    @State private var isShowingStartSheet = false
-    @State private var isShowingUnlockSheet = false
+    @ObservedObject var model: HotblockModel
+    @State private var showingStart = false
+    @State private var showingUnlock = false
+    @State private var showingHistory = false
+    @State private var showingSettings = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Hotblock")
-                .font(.largeTitle)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("Hotblock")
+                    .font(.title2)
+                    .fontWeight(.semibold)
 
-            Text("Add websites to a list. Press Start to watch the frontmost browser tab and play a voice warning when a blocked site is opened.")
-                .fixedSize(horizontal: false, vertical: true)
+                Spacer()
 
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 12) {
-                    Button(store.isBlocking ? "Stop" : "Start") {
-                        if store.isBlocking {
-                            if store.requiresUnlockChallenge() {
-                                store.prepareToStopBlocking()
-                                isShowingUnlockSheet = true
-                            } else {
-                                store.stopBlocking()
-                            }
-                        } else {
-                            isShowingStartSheet = true
-                        }
+                Button {
+                    showingHistory = true
+                } label: {
+                    Image(systemName: "clock")
+                }
+                .help("History")
+
+                Button {
+                    showingSettings = true
+                } label: {
+                    Image(systemName: "gearshape")
+                }
+                .help("Settings")
+            }
+
+            HStack {
+                TextField("instagram.com", text: $model.draftWebsite)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit {
+                        model.addWebsite()
                     }
 
-                    Text(store.isBlocking ? "Blocking active" : "Blocking off")
-                        .foregroundStyle(.secondary)
+                Button("Add") {
+                    model.addWebsite()
                 }
+                    .keyboardShortcut(.defaultAction)
+            }
 
-                Text("Detected browsers: \(detectedBrowsersText)")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-
-                Text("Supports Safari, Chrome, Brave, and Arc when the browser is frontmost.")
-                    .font(.subheadline)
+            if !model.feedback.isEmpty {
+                Text(model.feedback)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
-            Divider()
-
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Add Website")
-                    .font(.headline)
-
-                HStack(spacing: 12) {
-                    TextField("instagram.com", text: $store.draftWebsite)
-                        .textFieldStyle(.roundedBorder)
-                        .onSubmit {
-                            store.addWebsite()
-                        }
-
-                    Button("Add") {
-                        store.addWebsite()
-                    }
-                }
-            }
-
-            Divider()
-
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Blocked Websites")
-                    .font(.headline)
-
-                if store.websites.isEmpty {
+            GroupBox("Blocked Websites") {
+                if model.websites.isEmpty {
                     Text("No websites added.")
                         .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    List {
-                        ForEach(store.websites, id: \.self) { website in
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(website)
-
-                                    if store.lastInterceptedWebsite == website {
-                                        Text("Last warned site")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-
-                                Spacer()
-
-                                Button("Test Voice") {
-                                    store.simulateVisit(website)
-                                }
-                                .disabled(!store.isBlocking)
-
-                                Button("Remove") {
-                                    store.removeWebsite(website)
-                                }
+                    List(model.websites, id: \.self) { website in
+                        HStack {
+                            Text(website)
+                            Spacer()
+                            Button {
+                                model.removeWebsite(website)
+                            } label: {
+                                Image(systemName: "minus.circle")
                             }
+                            .buttonStyle(.borderless)
+                            .disabled(model.isBlocking)
+                            .help(model.isBlocking ? "Websites cannot be removed during a strict session" : "Remove")
                         }
                     }
-                    .frame(minHeight: 240)
                 }
             }
+            .frame(maxHeight: .infinity)
 
-            Divider()
+            HStack {
+                Spacer()
+                Button(model.isBlocking ? "Stop" : "Start") {
+                    if model.isBlocking {
+                        showingUnlock = true
+                    } else if model.canStartStrictSession {
+                        showingStart = true
+                    } else {
+                        model.showSetup()
+                    }
+                }
+            }
+        }
+        .padding(18)
+        .frame(width: 520, height: 430)
+        .sheet(isPresented: $showingStart) {
+            StartSessionView(model: model, isPresented: $showingStart)
+        }
+        .sheet(isPresented: $showingUnlock) {
+            UnlockView(model: model, isPresented: $showingUnlock)
+        }
+        .sheet(isPresented: $showingHistory) {
+            HistoryView(model: model)
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView(model: model)
+        }
+        .sheet(isPresented: $model.setupPresented) {
+            SetupAssistantView(model: model)
+        }
+    }
+}
+
+private struct StartSessionView: View {
+    @ObservedObject var model: HotblockModel
+    @Binding var isPresented: Bool
+    @State private var wordCount = 3
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Start Strict Session")
+                .font(.headline)
+
+            Text("Choose how many random words you must type to stop blocking.")
+
+            Text("Unlock words: \(wordCount)")
+            Slider(
+                value: Binding(
+                    get: { Double(wordCount) },
+                    set: { wordCount = Int($0.rounded()) }
+                ),
+                in: 1...100,
+                step: 1
+            )
+
+            HStack {
+                Spacer()
+                Button("Cancel") {
+                    isPresented = false
+                }
+                Button("Start") {
+                    model.startBlocking(unlockWordCount: wordCount)
+                    isPresented = false
+                }
+                .keyboardShortcut(.defaultAction)
+            }
         }
         .padding(20)
-        .frame(width: 560, height: 420)
-        .task {
-            store.configureLaunchAtLogin()
-            await store.requestAutomationPermissionOnLaunch()
-        }
-        .sheet(isPresented: $isShowingStartSheet) {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Start Blocking")
-                    .font(.headline)
+        .frame(width: 380)
+    }
+}
 
-                Text("Choose how many random words must be typed to unblock. Set it to 0 to disable the typing challenge.")
-                    .fixedSize(horizontal: false, vertical: true)
+private struct UnlockView: View {
+    @ObservedObject var model: HotblockModel
+    @Binding var isPresented: Bool
+    @State private var recoveryFailed = false
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Required words: \(store.pendingUnlockWordCount)")
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Stop Strict Session")
+                .font(.headline)
 
-                    Slider(
-                        value: Binding(
-                            get: { Double(store.pendingUnlockWordCount) },
-                            set: { store.pendingUnlockWordCount = Int($0.rounded()) }
-                        ),
-                        in: 0...100,
-                        step: 1
-                    )
+            Text("Type these words exactly:")
+
+            Text(model.unlockWords.joined(separator: " "))
+                .fixedSize(horizontal: false, vertical: true)
+
+            TextField("Type the words here", text: $model.unlockAttempt)
+                .textFieldStyle(.roundedBorder)
+                .onSubmit(submit)
+
+            if !model.unlockError.isEmpty {
+                Text(model.unlockError)
+                    .foregroundStyle(.red)
+                    .font(.caption)
+            }
+            if recoveryFailed {
+                Text("Administrator Recovery was cancelled or failed.")
+                    .foregroundStyle(.red)
+                    .font(.caption)
+            }
+
+            HStack {
+                Button("Administrator Recovery") {
+                    Task {
+                        recoveryFailed = !(await model.requestAdministratorRecovery())
+                        if !model.isBlocking {
+                            isPresented = false
+                        }
+                    }
                 }
 
-                HStack {
-                    Spacer()
-
-                    Button("Cancel") {
-                        isShowingStartSheet = false
-                    }
-
-                    Button("Start") {
-                        store.startBlocking()
-                        isShowingStartSheet = false
-                    }
+                Spacer()
+                Button("Cancel") {
+                    isPresented = false
+                }
+                Button("Unblock", action: submit)
                     .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(width: 470)
+    }
+
+    private func submit() {
+        if model.submitUnlockAttempt() {
+            isPresented = false
+        }
+    }
+}
+
+private struct HistoryView: View {
+    @ObservedObject var model: HotblockModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("History")
+                .font(.headline)
+
+            if model.history.isEmpty {
+                Text("No blocked attempts yet.")
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List(model.history) { entry in
+                    HStack {
+                        Text(entry.website)
+                        Spacer()
+                        Text(entry.timestamp.formatted(date: .abbreviated, time: .shortened))
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
-            .padding(20)
-            .frame(width: 360)
-        }
-        .sheet(isPresented: $isShowingUnlockSheet) {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Unblock")
-                    .font(.headline)
 
-                if store.unlockWords.isEmpty {
-                    Text("No word challenge is required.")
+            HStack {
+                Button("Delete History") {
+                    model.clearHistory()
+                }
+                    .disabled(model.history.isEmpty)
+                Spacer()
+                Button("Close") {
+                    dismiss()
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(width: 500, height: 360)
+    }
+}
+
+private struct SettingsView: View {
+    @ObservedObject var model: HotblockModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Settings")
+                .font(.headline)
+
+            Picker(
+                "English Voice",
+                selection: Binding(
+                    get: { model.settings.voiceName },
+                    set: { model.setVoice($0) }
+                )
+            ) {
+                ForEach(model.englishVoices, id: \.self) { voice in
+                    Text(voice).tag(voice)
+                }
+            }
+            .disabled(model.isBlocking)
+
+            Text("Volume: \(model.settings.volume)%")
+            Slider(
+                value: Binding(
+                    get: { Double(model.settings.volume) },
+                    set: { model.setVolume(Int($0.rounded())) }
+                ),
+                in: 0...100,
+                step: 1
+            )
+            .disabled(model.isBlocking)
+
+            if model.isBlocking {
+                Text("Voice settings are locked during a strict session.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack {
+                Button("Test Voice") {
+                    model.testVoice()
+                }
+                Button("Setup Assistant") {
+                    model.showSetup()
+                }
+                Spacer()
+                Button("Close") {
+                    dismiss()
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(width: 420)
+    }
+}
+
+private struct SetupAssistantView: View {
+    @ObservedObject var model: HotblockModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var step = 0
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Hotblock Setup")
+                .font(.headline)
+            Text("Step \(step + 1) of 5")
+                .foregroundStyle(.secondary)
+
+            GroupBox {
+                stepContent
+                    .frame(maxWidth: .infinity, minHeight: 170, alignment: .topLeading)
+            }
+
+            HStack {
+                Button("Back") {
+                    step = max(step - 1, 0)
+                }
+                .disabled(step == 0)
+
+                Spacer()
+
+                if model.setupCompleted {
+                    Button("Close") {
+                        dismiss()
+                    }
+                } else if step < 4 {
+                    Button("Next") {
+                        step += 1
+                    }
+                    .keyboardShortcut(.defaultAction)
                 } else {
-                    Text("Type these words to stop blocking:")
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Text(store.unlockWords.joined(separator: " "))
-
-                    TextField("Type the words here", text: $store.unlockAttempt)
-                        .textFieldStyle(.roundedBorder)
-                        .onSubmit {
-                            if store.submitUnlockAttempt() {
-                                isShowingUnlockSheet = false
-                            }
-                        }
-                }
-
-                if !store.unlockErrorMessage.isEmpty {
-                    Text(store.unlockErrorMessage)
-                        .font(.subheadline)
-                        .foregroundStyle(.red)
-                }
-
-                HStack {
-                    Spacer()
-
-                    Button("Cancel") {
-                        isShowingUnlockSheet = false
-                    }
-
-                    Button("Unblock") {
-                        if store.submitUnlockAttempt() {
-                            isShowingUnlockSheet = false
-                        }
+                    Button("Finish") {
+                        model.completeSetup()
                     }
                     .keyboardShortcut(.defaultAction)
                 }
             }
-            .padding(20)
-            .frame(width: 420)
+        }
+        .padding(20)
+        .frame(width: 500, height: 310)
+        .interactiveDismissDisabled(!model.setupCompleted)
+    }
+
+    @ViewBuilder
+    private var stepContent: some View {
+        switch step {
+        case 0:
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Background Protection")
+                    .font(.headline)
+                Text("Hotblock uses background protection to relaunch an active strict session after Force Quit.")
+                Label(
+                    model.backgroundProtectionAvailable ? "Protection component is available" : "Protection component is missing",
+                    systemImage: model.backgroundProtectionAvailable ? "checkmark.circle" : "exclamationmark.triangle"
+                )
+                Text("This prototype uses a user LaunchAgent. The production release will use a signed privileged helper.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        case 1:
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Browser Permissions")
+                    .font(.headline)
+                ForEach(model.installedBrowsers) { browser in
+                    HStack {
+                        Text(browser.displayName)
+                        Spacer()
+                        Text(permissionText(model.browserPermissions[browser] ?? .unknown))
+                    }
+                }
+                HStack {
+                    Button("Request Permissions") {
+                        Task { await model.requestAllBrowserPermissions() }
+                    }
+                    Button("Open Automation Settings") {
+                        model.openAutomationSettings()
+                    }
+                }
+            }
+        case 2:
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Notifications")
+                    .font(.headline)
+                Text("Hotblock uses notifications when browser permission is lost or a tab cannot be closed.")
+                Label(
+                    model.notificationsAuthorized ? "Notifications allowed" : "Notifications not allowed",
+                    systemImage: model.notificationsAuthorized ? "checkmark.circle" : "exclamationmark.triangle"
+                )
+                Button("Request Notification Permission") {
+                    Task { await model.requestNotificationPermission() }
+                }
+            }
+        case 3:
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Voice")
+                    .font(.headline)
+                Text("Choose the voice and volume later in Settings, then test it here.")
+                Button("Test Voice") {
+                    model.testVoice()
+                }
+            }
+        default:
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Final Verification")
+                    .font(.headline)
+                Label(
+                    model.canCompleteSetup ? "Hotblock is ready" : "Some required setup steps are incomplete",
+                    systemImage: model.canCompleteSetup ? "checkmark.circle" : "exclamationmark.triangle"
+                )
+                Text("Strict sessions cannot start until every installed supported browser has permission.")
+            }
         }
     }
 
-    private var detectedBrowsersText: String {
-        if store.availableBrowsers.isEmpty {
-            return "None"
+    private func permissionText(_ permission: BrowserPermission) -> String {
+        switch permission {
+        case .authorized: "Allowed"
+        case .denied: "Denied"
+        case .unavailable: "Unavailable"
+        case .unknown: "Not checked"
         }
-
-        return store.availableBrowsers.joined(separator: ", ")
     }
 }

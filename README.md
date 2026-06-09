@@ -65,6 +65,10 @@ Then allow Hotblock to control your browsers.
 2. Press **Start**.
 3. Choose how many random words will be required to stop the strict session.
 
+To quickly add a large group of websites, open **Presets** and choose
+**News**, **Social Media**, or **Entertainment**. Review the list, deselect any
+websites you do not want, then press **Add**.
+
 During a strict session, blocked tabs are closed automatically. To stop the
 session, press **Stop** and correctly type the unlock words.
 

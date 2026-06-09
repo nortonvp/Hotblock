@@ -113,6 +113,11 @@ final class HotblockModel: ObservableObject {
         syncAndPersist()
     }
 
+    func addWebsites(_ newWebsites: Set<String>) {
+        websites = Array(Set(websites).union(newWebsites)).sorted()
+        syncAndPersist()
+    }
+
     func startBlocking(unlockWordCount: Int) {
         guard canStartStrictSession else {
             setupPresented = true

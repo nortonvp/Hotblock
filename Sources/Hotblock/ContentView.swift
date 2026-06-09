@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var showingUnlock = false
     @State private var showingHistory = false
     @State private var showingSettings = false
+    @State private var selectedPreset: WebsitePreset?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -41,7 +42,15 @@ struct ContentView: View {
                 Button("Add") {
                     model.addWebsite()
                 }
-                    .keyboardShortcut(.defaultAction)
+                .keyboardShortcut(.defaultAction)
+
+                Menu("Presets") {
+                    ForEach(WebsitePreset.allCases) { preset in
+                        Button(preset.rawValue) {
+                            selectedPreset = preset
+                        }
+                    }
+                }
             }
 
             if !model.feedback.isEmpty {
@@ -104,6 +113,75 @@ struct ContentView: View {
         .sheet(isPresented: $model.setupPresented) {
             SetupAssistantView(model: model)
         }
+        .sheet(item: $selectedPreset) { preset in
+            PresetConfirmationView(model: model, preset: preset)
+        }
+    }
+}
+
+private struct PresetConfirmationView: View {
+    @ObservedObject var model: HotblockModel
+    let preset: WebsitePreset
+    @Environment(\.dismiss) private var dismiss
+    @State private var selectedWebsites: Set<String>
+
+    init(model: HotblockModel, preset: WebsitePreset) {
+        self.model = model
+        self.preset = preset
+        _selectedWebsites = State(initialValue: Set(preset.websites))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("\(preset.rawValue) Preset")
+                .font(.headline)
+
+            Text("Choose the websites to add to your blocked list.")
+                .foregroundStyle(.secondary)
+
+            HStack {
+                Button("Select All") {
+                    selectedWebsites = Set(preset.websites)
+                }
+                Button("Deselect All") {
+                    selectedWebsites.removeAll()
+                }
+                Spacer()
+                Text("\(selectedWebsites.count) selected")
+                    .foregroundStyle(.secondary)
+            }
+
+            List(preset.websites, id: \.self) { website in
+                Toggle(
+                    website,
+                    isOn: Binding(
+                        get: { selectedWebsites.contains(website) },
+                        set: { isSelected in
+                            if isSelected {
+                                selectedWebsites.insert(website)
+                            } else {
+                                selectedWebsites.remove(website)
+                            }
+                        }
+                    )
+                )
+            }
+
+            HStack {
+                Spacer()
+                Button("Cancel") {
+                    dismiss()
+                }
+                Button("Add") {
+                    model.addWebsites(selectedWebsites)
+                    dismiss()
+                }
+                .disabled(selectedWebsites.isEmpty)
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(width: 460, height: 520)
     }
 }
 

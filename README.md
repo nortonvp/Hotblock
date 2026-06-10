@@ -10,46 +10,47 @@ Supported browsers: Safari, Google Chrome, Brave Browser, and Arc.
 Visit the [Hotblock website](https://nortonvp.github.io/Hotblock/) or download
 the [latest release](https://github.com/nortonvp/Hotblock/releases/latest/download/Hotblock.zip).
 
-## Requirements
+## Install the GitHub Beta
 
-- macOS 14 or newer
-- Apple's Command Line Tools
+The downloadable app requires macOS 14 or newer and works on Apple Silicon and
+Intel Macs.
 
-Install the Command Line Tools by opening Terminal and running:
+1. Download and unzip `Hotblock.zip`.
+2. Move `Hotblock.app` into your Applications folder.
+3. Right-click Hotblock and choose **Open**.
+4. If macOS blocks it, open **System Settings → Privacy & Security**, scroll
+   down, and click **Open Anyway**.
+5. Follow Hotblock's setup assistant to allow Automation and notifications.
+
+Hotblock is currently a free, open-source GitHub beta. GitHub Actions builds
+every release directly from this repository. The app is ad-hoc signed rather
+than Apple-notarized, so macOS shows a warning the first time you open it.
+
+## Build It Yourself
+
+Building from source requires Apple's Command Line Tools. Open Terminal and run:
 
 ```bash
 xcode-select --install
-```
-
-## Build and Install
-
-1. Open Terminal.
-2. Download the project and enter its folder:
-
-```bash
 git clone https://github.com/nortonvp/Hotblock.git
 cd Hotblock
-```
-
-3. Build the macOS app:
-
-```bash
 ./scripts/build-app.sh
-```
-
-4. Install Hotblock in your Applications folder:
-
-```bash
 cp -R dist/Hotblock.app /Applications/
-```
-
-5. Open Hotblock:
-
-```bash
 open /Applications/Hotblock.app
 ```
 
 Hotblock appears as a shield icon in the macOS menu bar.
+
+## Verify the Download
+
+Each GitHub release includes `Hotblock.zip.sha256`. To verify the ZIP, download
+both files into the same folder, open Terminal in that folder, and run:
+
+```bash
+shasum -a 256 -c Hotblock.zip.sha256
+```
+
+Terminal should print `Hotblock.zip: OK`.
 
 ## First Launch
 

@@ -63,15 +63,6 @@ button,
   letter-spacing: -0.04em;
 }
 
-.brand svg {
-  width: 22px;
-  height: 25px;
-  overflow: visible;
-  fill: var(--ink);
-  stroke: var(--paper);
-  stroke-width: 2;
-}
-
 nav {
   display: flex;
   gap: 28px;
@@ -425,14 +416,14 @@ h1 {
   }
 }
 
-.warning-shield {
+.warning-mark {
   display: grid;
   place-items: center;
   width: 22px;
-  height: 25px;
+  height: 22px;
   color: var(--paper);
   background: var(--ink);
-  border-radius: 10px 10px 13px 13px;
+  border-radius: 50%;
 }
 
 .proof-strip {
@@ -669,11 +660,6 @@ footer {
   background: var(--ink);
   border-top: 1px solid #353531;
   font-size: 0.76rem;
-}
-
-footer .brand svg {
-  fill: var(--paper);
-  stroke: var(--ink);
 }
 
 footer p {

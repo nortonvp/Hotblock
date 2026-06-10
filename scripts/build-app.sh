@@ -37,6 +37,7 @@ else
 fi
 
 cp "$ROOT_DIR/App/Info.plist" "$CONTENTS_DIR/Info.plist"
+cp "$ROOT_DIR/App/Hotblock.icns" "$RESOURCES_DIR/Hotblock.icns"
 cp "$ROOT_DIR/scripts/hotblock-watchdog.sh" "$RESOURCES_DIR/hotblock-watchdog.sh"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$CONTENTS_DIR/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$CONTENTS_DIR/Info.plist"

@@ -57,6 +57,19 @@ enum BrowserAutomation {
         return BrowserReadResult(urlString: nil, permission: denied ? .denied : .unavailable)
     }
 
+    nonisolated static func checkPermission(for browser: SupportedBrowser) -> BrowserPermission {
+        let script = """
+        tell application "\(browser.displayName)"
+            return name
+        end tell
+        """
+        let result = runAppleScript(script)
+        if result.status == 0 {
+            return .authorized
+        }
+        return isPermissionDenied(result.error) ? .denied : .unavailable
+    }
+
     nonisolated static func closeActiveTab(in browser: SupportedBrowser) -> Bool {
         let script: String
         switch browser {
@@ -89,6 +102,12 @@ enum BrowserAutomation {
             host.removeFirst(4)
         }
         return host
+    }
+
+    nonisolated private static func isPermissionDenied(_ error: String) -> Bool {
+        error.contains("Not authorized to send Apple events")
+            || error.contains("-1743")
+            || error.contains("1002")
     }
 
     nonisolated private static func runAppleScript(_ script: String) -> ScriptResult {
@@ -156,7 +175,14 @@ enum SpeechService {
 
 enum NotificationService {
     static func requestAuthorization() async -> Bool {
-        (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])) ?? false
+        _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
+        return await isAuthorized()
+    }
+
+    static func isAuthorized() async -> Bool {
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        return settings.authorizationStatus == .authorized
+            || settings.authorizationStatus == .provisional
     }
 
     nonisolated static func send(title: String, body: String) {

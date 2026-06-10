@@ -59,9 +59,27 @@ final class HotblockModel: ObservableObject {
     }
 
     var canCompleteSetup: Bool {
-        installedBrowsers.allSatisfy { browserPermissions[$0] == .authorized }
-            && notificationsAuthorized
-            && backgroundProtectionAvailable
+        requiredSetupIssues.isEmpty
+    }
+
+    var requiredSetupIssues: [String] {
+        var issues: [String] = []
+        if !backgroundProtectionAvailable {
+            issues.append("The background protection component is missing.")
+        }
+        for browser in installedBrowsers where browserPermissions[browser] != .authorized {
+            switch browserPermissions[browser] ?? .unknown {
+            case .denied:
+                issues.append("Allow Hotblock to control \(browser.displayName) in Automation settings.")
+            case .unavailable:
+                issues.append("Hotblock could not verify \(browser.displayName). Open it, then check again.")
+            case .unknown:
+                issues.append("Check Automation permission for \(browser.displayName).")
+            case .authorized:
+                break
+            }
+        }
+        return issues
     }
 
     func bootstrap() async {
@@ -85,7 +103,7 @@ final class HotblockModel: ObservableObject {
             syncAndPersist()
         }
 
-        notificationsAuthorized = await NotificationService.requestAuthorization()
+        notificationsAuthorized = await NotificationService.isAuthorized()
         await requestAllBrowserPermissions()
     }
 
@@ -189,15 +207,21 @@ final class HotblockModel: ObservableObject {
     func requestAllBrowserPermissions() async {
         for browser in installedBrowsers {
             browserPermissions[browser] = .unknown
-            let result = await Task.detached(priority: .utility) {
-                BrowserAutomation.readActiveTab(in: browser)
+            let permission = await Task.detached(priority: .utility) {
+                BrowserAutomation.checkPermission(for: browser)
             }.value
-            browserPermissions[browser] = result.permission
+            browserPermissions[browser] = permission
         }
     }
 
     func requestNotificationPermission() async {
         notificationsAuthorized = await NotificationService.requestAuthorization()
+    }
+
+    func refreshSetupVerification() async {
+        installedBrowsers = BrowserAutomation.installedBrowsers()
+        notificationsAuthorized = await NotificationService.isAuthorized()
+        await requestAllBrowserPermissions()
     }
 
     func openAutomationSettings() {

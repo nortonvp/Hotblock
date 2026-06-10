@@ -428,7 +428,10 @@ private struct SetupAssistantView: View {
                     .keyboardShortcut(.defaultAction)
                 } else {
                     Button("Finish") {
-                        model.completeSetup()
+                        Task {
+                            await model.refreshSetupVerification()
+                            model.completeSetup()
+                        }
                     }
                     .keyboardShortcut(.defaultAction)
                 }
@@ -437,6 +440,11 @@ private struct SetupAssistantView: View {
         .padding(20)
         .frame(width: 500, height: 310)
         .interactiveDismissDisabled(!model.setupCompleted)
+        .task(id: step) {
+            if step == 4 {
+                await model.refreshSetupVerification()
+            }
+        }
     }
 
     @ViewBuilder
@@ -481,8 +489,8 @@ private struct SetupAssistantView: View {
                     .font(.headline)
                 Text("Hotblock uses notifications when browser permission is lost or a tab cannot be closed.")
                 Label(
-                    model.notificationsAuthorized ? "Notifications allowed" : "Notifications not allowed",
-                    systemImage: model.notificationsAuthorized ? "checkmark.circle" : "exclamationmark.triangle"
+                    model.notificationsAuthorized ? "Notifications allowed" : "Notifications not allowed (optional)",
+                    systemImage: model.notificationsAuthorized ? "checkmark.circle" : "info.circle"
                 )
                 Button("Request Notification Permission") {
                     Task { await model.requestNotificationPermission() }
@@ -506,6 +514,14 @@ private struct SetupAssistantView: View {
                     systemImage: model.canCompleteSetup ? "checkmark.circle" : "exclamationmark.triangle"
                 )
                 Text("Strict sessions cannot start until every installed supported browser has permission.")
+                ForEach(model.requiredSetupIssues, id: \.self) { issue in
+                    Text("• \(issue)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Button("Check Again") {
+                    Task { await model.refreshSetupVerification() }
+                }
             }
         }
     }

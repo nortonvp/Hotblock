@@ -20,7 +20,7 @@ Intel Macs.
 3. Right-click Hotblock and choose **Open**.
 4. If macOS blocks it, open **System Settings → Privacy & Security**, scroll
    down, and click **Open Anyway**.
-5. Follow Hotblock's setup assistant to allow Automation and notifications.
+5. Follow Hotblock's setup assistant to allow Automation. Notifications are optional.
 
 Hotblock is currently a free, open-source GitHub beta. GitHub Actions builds
 every release directly from this repository. The app is ad-hoc signed rather
@@ -56,8 +56,8 @@ Terminal should print `Hotblock.dmg: OK`.
 
 Follow the setup assistant and allow:
 
-- Notifications
 - Automation access for every installed supported browser
+- Notifications, if you want permission and tab-closing alerts
 
 If Automation access was denied, open:
 

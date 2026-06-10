@@ -38,7 +38,7 @@ jobs:
           2. Drag Hotblock into the Applications folder.
           3. Right-click Hotblock in Applications and choose **Open**.
           4. If macOS blocks it, open **System Settings → Privacy & Security**, then click **Open Anyway**.
-          5. Follow Hotblock's setup assistant to allow Automation and notifications.
+          5. Follow Hotblock's setup assistant to allow browser Automation. Notifications are optional.
 
           This free GitHub beta is open source and built automatically by GitHub Actions. It is ad-hoc signed, not Apple-notarized, so macOS shows a warning on first launch.
 

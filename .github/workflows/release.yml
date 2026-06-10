@@ -24,19 +24,21 @@ jobs:
           ./scripts/build-app.sh
           lipo dist/Hotblock.app/Contents/MacOS/Hotblock -verify_arch arm64 x86_64
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' dist/Hotblock.app/Contents/Info.plist)" = "$HOTBLOCK_VERSION"
-      - name: Create download archive
+      - name: Create disk image
         run: |
-          ditto -c -k --keepParent dist/Hotblock.app Hotblock.zip
-          shasum -a 256 Hotblock.zip > Hotblock.zip.sha256
+          ./scripts/create-dmg.sh Hotblock.dmg
+          hdiutil verify Hotblock.dmg
+          shasum -a 256 Hotblock.dmg > Hotblock.dmg.sha256
       - name: Write release instructions
         run: |
           cat > RELEASE_NOTES.md <<'EOF'
           ## Install
 
-          1. Download `Hotblock.zip`, unzip it, and move `Hotblock.app` to Applications.
-          2. Right-click Hotblock and choose **Open**.
-          3. If macOS blocks it, open **System Settings → Privacy & Security**, then click **Open Anyway**.
-          4. Follow Hotblock's setup assistant to allow Automation and notifications.
+          1. Download and open `Hotblock.dmg`.
+          2. Drag Hotblock into the Applications folder.
+          3. Right-click Hotblock in Applications and choose **Open**.
+          4. If macOS blocks it, open **System Settings → Privacy & Security**, then click **Open Anyway**.
+          5. Follow Hotblock's setup assistant to allow Automation and notifications.
 
           This free GitHub beta is open source and built automatically by GitHub Actions. It is ad-hoc signed, not Apple-notarized, so macOS shows a warning on first launch.
 
@@ -45,4 +47,4 @@ jobs:
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" Hotblock.zip Hotblock.zip.sha256 --notes-file RELEASE_NOTES.md --title "Hotblock $GITHUB_REF_NAME"
+        run: gh release create "$GITHUB_REF_NAME" Hotblock.dmg Hotblock.dmg.sha256 --notes-file RELEASE_NOTES.md --title "Hotblock $GITHUB_REF_NAME"

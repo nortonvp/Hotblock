@@ -8,15 +8,15 @@ Supported browsers: Safari, Google Chrome, Brave Browser, and Arc.
 ## Download
 
 Visit the [Hotblock website](https://nortonvp.github.io/Hotblock/) or download
-the [latest release](https://github.com/nortonvp/Hotblock/releases/latest/download/Hotblock.zip).
+the [latest release](https://github.com/nortonvp/Hotblock/releases/latest/download/Hotblock.dmg).
 
 ## Install the GitHub Beta
 
 The downloadable app requires macOS 14 or newer and works on Apple Silicon and
 Intel Macs.
 
-1. Download and unzip `Hotblock.zip`.
-2. Move `Hotblock.app` into your Applications folder.
+1. Download and open `Hotblock.dmg`.
+2. Drag Hotblock into the Applications folder.
 3. Right-click Hotblock and choose **Open**.
 4. If macOS blocks it, open **System Settings → Privacy & Security**, scroll
    down, and click **Open Anyway**.
@@ -43,14 +43,14 @@ Hotblock appears as a shield icon in the macOS menu bar.
 
 ## Verify the Download
 
-Each GitHub release includes `Hotblock.zip.sha256`. To verify the ZIP, download
+Each GitHub release includes `Hotblock.dmg.sha256`. To verify the disk image, download
 both files into the same folder, open Terminal in that folder, and run:
 
 ```bash
-shasum -a 256 -c Hotblock.zip.sha256
+shasum -a 256 -c Hotblock.dmg.sha256
 ```
 
-Terminal should print `Hotblock.zip: OK`.
+Terminal should print `Hotblock.dmg: OK`.
 
 ## First Launch
 

@@ -198,6 +198,73 @@ h1 {
   font-size: 0.72rem;
 }
 
+.download-help {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.download-help a {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.download-notice {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 20px;
+  align-items: center;
+  width: min(660px, calc(100% - 44px));
+  padding: 16px 16px 16px 20px;
+  color: var(--paper);
+  background: var(--ink);
+  border: 1px solid var(--paper);
+  border-radius: 14px;
+  box-shadow: 8px 8px 0 rgba(17, 17, 15, 0.2);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(24px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.download-notice.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.download-notice strong {
+  font-size: 0.86rem;
+}
+
+.download-notice p {
+  margin: 3px 0 0;
+  color: #aaa9a3;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.download-notice .button-small {
+  color: var(--ink);
+  background: var(--acid);
+  border-color: var(--paper);
+  white-space: nowrap;
+}
+
+.download-notice > button {
+  padding: 4px 8px;
+  color: var(--paper);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 1.4rem;
+}
+
 .app-stage {
   position: relative;
   display: grid;
@@ -749,6 +816,24 @@ footer > a:last-child {
   .hero-actions {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .download-notice {
+    right: 12px;
+    bottom: 12px;
+    grid-template-columns: 1fr auto;
+    gap: 14px;
+    width: calc(100% - 24px);
+  }
+
+  .download-notice .button {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .download-notice > button {
+    grid-column: 2;
+    grid-row: 1;
   }
 
   .app-stage {

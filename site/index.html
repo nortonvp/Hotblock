@@ -8,6 +8,7 @@
   <title>Hotblock — Stop opening it.</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
+  <script src="download.js" defer></script>
 </head>
 <body>
   <header class="site-header">
@@ -19,7 +20,7 @@
       <a href="#install">Install</a>
       <a href="https://github.com/nortonvp/Hotblock">GitHub</a>
     </nav>
-    <a class="button button-small" href="https://github.com/nortonvp/Hotblock/releases/latest/download/Hotblock.dmg">
+    <a class="button button-small direct-download" href="https://github.com/nortonvp/Hotblock/releases/latest/download/Hotblock.dmg">
       Download
     </a>
   </header>
@@ -34,13 +35,18 @@
           then tells you exactly what you should be doing instead.
         </p>
         <div class="hero-actions">
-          <a class="button button-primary" href="https://github.com/nortonvp/Hotblock/releases/latest/download/Hotblock.dmg">
+          <a class="button button-primary direct-download" href="https://github.com/nortonvp/Hotblock/releases/latest/download/Hotblock.dmg">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 20h16"/></svg>
             Download for Mac
           </a>
           <a class="text-link" href="#install">See installation steps <span>↓</span></a>
         </div>
         <p class="requirement">Free GitHub beta · Apple Silicon + Intel · macOS 14+</p>
+        <p class="download-help">
+          Download not starting?
+          <a href="https://github.com/nortonvp/Hotblock/releases/latest">Open the GitHub release</a>
+          in Safari or Chrome.
+        </p>
       </div>
 
       <div class="app-stage" aria-label="Hotblock app preview">
@@ -175,7 +181,7 @@
         </li>
       </ol>
       <div class="install-actions">
-        <a class="button button-primary button-large" href="https://github.com/nortonvp/Hotblock/releases/latest/download/Hotblock.dmg">
+        <a class="button button-primary button-large direct-download" href="https://github.com/nortonvp/Hotblock/releases/latest/download/Hotblock.dmg">
           Download Hotblock.dmg
         </a>
         <a class="text-link" href="https://github.com/nortonvp/Hotblock/releases/latest">View release &amp; checksum ↗</a>
@@ -190,6 +196,15 @@
     <p>Strict focus for macOS.</p>
     <a href="https://github.com/nortonvp/Hotblock">Source on GitHub ↗</a>
   </footer>
+
+  <aside class="download-notice" id="download-notice" aria-live="polite" aria-hidden="true">
+    <div>
+      <strong>Download requested</strong>
+      <p>If nothing happened, this browser blocks downloads. Open the release in Safari or Chrome.</p>
+    </div>
+    <a class="button button-small" href="https://github.com/nortonvp/Hotblock/releases/latest">Open GitHub release</a>
+    <button id="close-download-notice" type="button" aria-label="Close download message">×</button>
+  </aside>
 
 </body>
 </html>

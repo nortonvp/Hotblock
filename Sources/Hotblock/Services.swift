@@ -1,4 +1,5 @@
 import AppKit
+import AVFAudio
 import Foundation
 import UserNotifications
 
@@ -139,84 +140,251 @@ enum BrowserAutomation {
     }
 }
 
-final class SpeechService: @unchecked Sendable {
+@MainActor
+final class SpeechService {
     static let shared = SpeechService()
-
-    private let lock = NSLock()
-    private var activeProcess: Process?
+    private let synthesizer = AVSpeechSynthesizer()
 
     private init() {}
 
-    nonisolated static func englishVoices() -> [String] {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/say")
-        process.arguments = ["-v", "?"]
-        let outputPipe = Pipe()
-        process.standardOutput = outputPipe
-        process.standardError = Pipe()
-
-        guard (try? process.run()) != nil else {
-            return ["Samantha", "Daniel"]
-        }
-        process.waitUntilExit()
-
-        let data = outputPipe.fileHandleForReading.readDataToEndOfFile()
-        let output = String(data: data, encoding: .utf8) ?? ""
-        let voices = output.split(separator: "\n").compactMap { line -> String? in
-            let fields = line.split(whereSeparator: \.isWhitespace)
-            guard let localeIndex = fields.firstIndex(where: {
-                $0.hasPrefix("en_") || $0.hasPrefix("en-")
-            }), localeIndex > 0 else {
-                return nil
+    nonisolated static func englishVoices() -> [SpeechVoiceOption] {
+        let voices = AVSpeechSynthesisVoice.speechVoices()
+            .filter { $0.language.hasPrefix("en") }
+            .filter(Self.isNaturalVoice)
+            .sorted { lhs, rhs in
+                let leftPriority = Self.voicePriority(lhs)
+                let rightPriority = Self.voicePriority(rhs)
+                if leftPriority != rightPriority {
+                    return leftPriority < rightPriority
+                }
+                if lhs.language != rhs.language {
+                    return lhs.language < rhs.language
+                }
+                return lhs.name < rhs.name
             }
-            return fields[..<localeIndex].joined(separator: " ")
+            .map {
+                SpeechVoiceOption(id: $0.identifier, name: $0.name, languageCode: $0.language)
+            }
+
+        if !voices.isEmpty {
+            return Array(voices.prefix(2))
         }
-        let available = Set(voices)
-        let preferred = ["Ava", "Samantha", "Daniel", "Moira", "Karen", "Tessa"]
-        return Array(preferred.filter(available.contains).prefix(2))
+
+        return [
+            SpeechVoiceOption(
+                id: "com.apple.voice.compact.en-US.Samantha",
+                name: "Samantha",
+                languageCode: "en-US"
+            ),
+            SpeechVoiceOption(
+                id: "com.apple.voice.compact.en-GB.Daniel",
+                name: "Daniel",
+                languageCode: "en-GB"
+            ),
+        ]
     }
 
-    nonisolated static func displayName(for voice: String) -> String {
-        switch voice {
-        case "Ava": "Ava · American English"
-        case "Samantha": "Samantha · American English"
-        case "Daniel": "Daniel · British English"
-        case "Moira": "Moira · Irish English"
-        case "Karen": "Karen · Australian English"
-        case "Tessa": "Tessa · South African English"
-        default: voice
+    nonisolated static func displayName(for voiceID: String, in options: [SpeechVoiceOption]) -> String {
+        options.first(where: { $0.id == voiceID })?.displayName ?? voiceID
+    }
+
+    nonisolated static func resolvedVoiceOption(
+        for settings: HotblockSettings,
+        in options: [SpeechVoiceOption]
+    ) -> SpeechVoiceOption? {
+        if let voiceIdentifier = settings.voiceIdentifier,
+           let option = options.first(where: { $0.id == voiceIdentifier }) {
+            return option
+        }
+
+        if let option = options.first(where: { $0.name == settings.voiceName }) {
+            return option
+        }
+
+        return options.first
+    }
+
+    nonisolated private static func isNaturalVoice(_ voice: AVSpeechSynthesisVoice) -> Bool {
+        let noveltyNames: Set<String> = [
+            "Albert", "Bad News", "Bahh", "Bells", "Boing", "Bubbles", "Cellos",
+            "Fred", "Good News", "Jester", "Junior", "Kathy", "Organ", "Ralph",
+            "Superstar", "Trinoids", "Whisper", "Wobble", "Zarvox",
+        ]
+
+        if voice.identifier.contains(".eloquence.") {
+            return false
+        }
+
+        if noveltyNames.contains(voice.name) {
+            return false
+        }
+
+        if #available(macOS 14.0, *),
+           voice.voiceTraits.contains(.isNoveltyVoice) {
+            return false
+        }
+
+        return true
+    }
+
+    nonisolated private static func voicePriority(_ voice: AVSpeechSynthesisVoice) -> Int {
+        let preferredOrder = [
+            "Nicky", "Aaron", "Martha", "Arthur", "Catherine", "Gordon",
+            "Samantha", "Daniel", "Karen", "Moira", "Rishi", "Tessa",
+        ]
+
+        if let index = preferredOrder.firstIndex(of: voice.name) {
+            return index
+        }
+
+        if voice.identifier.contains("siri_") {
+            return preferredOrder.count + 20
+        }
+
+        return preferredOrder.count + 100
+    }
+
+    private enum SpeechStyle {
+        case preview
+        case warning(level: Int)
+    }
+
+    private struct SpeechSegment {
+        let text: String
+        let rate: Float
+        let pitch: Float
+        let preDelay: TimeInterval
+        let postDelay: TimeInterval
+    }
+
+    private struct SpeechProfile {
+        let baseRate: Float
+        let basePitch: Float
+        let initialDelay: TimeInterval
+        let sentencePause: TimeInterval
+    }
+
+    private static func profile(for style: SpeechStyle) -> SpeechProfile {
+        switch style {
+        case .preview:
+            return SpeechProfile(
+                baseRate: 0.47,
+                basePitch: 1.01,
+                initialDelay: 0.02,
+                sentencePause: 0.18
+            )
+        case .warning(let level):
+            let clampedLevel = min(max(level, 0), 4)
+            return SpeechProfile(
+                baseRate: max(0.39, 0.45 - (Float(clampedLevel) * 0.015)),
+                basePitch: max(0.88, 0.97 - (Float(clampedLevel) * 0.02)),
+                initialDelay: 0,
+                sentencePause: 0.24 + (Double(clampedLevel) * 0.03)
+            )
         }
     }
 
-    nonisolated func speak(_ message: String, settings: HotblockSettings) {
-        lock.lock()
-        defer { lock.unlock() }
+    private static func makeSegments(from message: String, style: SpeechStyle) -> [SpeechSegment] {
+        let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return [] }
 
-        if let activeProcess, activeProcess.isRunning {
-            activeProcess.terminate()
-            activeProcess.waitUntilExit()
-        }
+        let profile = profile(for: style)
+        let sentences = sentenceSplit(for: trimmed)
 
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/say")
-        let volume = Double(min(max(settings.volume, 0), 100)) / 100
-        process.arguments = ["-v", settings.voiceName, "[[volm \(volume)]] \(message)"]
-        process.standardOutput = Pipe()
-        process.standardError = Pipe()
-        guard (try? process.run()) != nil else {
-            activeProcess = nil
-            return
+        return sentences.enumerated().map { index, sentence in
+            let punctuation = sentence.last
+            let isShortCommand = sentence.split(whereSeparator: \.isWhitespace).count <= 3
+            let isQuestion = punctuation == "?"
+            let rateAdjustment = isShortCommand ? -0.03 : min(Float(sentence.count) * 0.0007, 0.03)
+            let pitchAdjustment: Float = isQuestion ? 0.04 : (isShortCommand ? -0.04 : 0)
+            let pauseAdjustment: TimeInterval
+
+            switch punctuation {
+            case ",":
+                pauseAdjustment = 0.12
+            case "!", "?":
+                pauseAdjustment = 0.28
+            default:
+                pauseAdjustment = 0.2
+            }
+
+            return SpeechSegment(
+                text: sentence,
+                rate: min(max(profile.baseRate + rateAdjustment, 0.37), 0.52),
+                pitch: min(max(profile.basePitch + pitchAdjustment, 0.84), 1.08),
+                preDelay: index == 0 ? profile.initialDelay : 0,
+                postDelay: profile.sentencePause + pauseAdjustment
+            )
         }
-        activeProcess = process
     }
 
-    nonisolated func stop() {
-        lock.lock()
-        defer { lock.unlock() }
-        if let activeProcess, activeProcess.isRunning {
-            activeProcess.terminate()
+    private static func sentenceSplit(for message: String) -> [String] {
+        let nsMessage = message as NSString
+        var sentences: [String] = []
+
+        nsMessage.enumerateSubstrings(
+            in: NSRange(location: 0, length: nsMessage.length),
+            options: [.bySentences, .localized]
+        ) { _, range, _, _ in
+            let sentence = nsMessage.substring(with: range)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if !sentence.isEmpty {
+                sentences.append(sentence)
+            }
         }
-        activeProcess = nil
+
+        return sentences.isEmpty ? [message] : sentences
+    }
+
+    private static func voice(for settings: HotblockSettings) -> AVSpeechSynthesisVoice? {
+        if let voiceIdentifier = settings.voiceIdentifier,
+           let voice = AVSpeechSynthesisVoice(identifier: voiceIdentifier) {
+            return voice
+        }
+
+        if let matchedVoice = AVSpeechSynthesisVoice.speechVoices().first(where: {
+            $0.name == settings.voiceName && $0.language.hasPrefix("en")
+        }) {
+            return matchedVoice
+        }
+
+        return AVSpeechSynthesisVoice(language: "en-US")
+    }
+
+    func preview(settings: HotblockSettings) {
+        speak(
+            "Right. You wanted focus. So let's get back to the thing that matters.",
+            settings: settings,
+            style: .preview
+        )
+    }
+
+    func speakWarning(_ message: String, level: Int, settings: HotblockSettings) {
+        speak(message, settings: settings, style: .warning(level: level))
+    }
+
+    private func speak(_ message: String, settings: HotblockSettings, style: SpeechStyle) {
+        _ = synthesizer.stopSpeaking(at: .immediate)
+
+        let voice = Self.voice(for: settings)
+        let volume = Float(min(max(settings.volume, 0), 100)) / 100
+        let segments = Self.makeSegments(from: message, style: style)
+
+        for segment in segments {
+            let utterance = AVSpeechUtterance(string: segment.text)
+            utterance.voice = voice
+            utterance.volume = volume
+            utterance.rate = segment.rate
+            utterance.pitchMultiplier = segment.pitch
+            utterance.preUtteranceDelay = segment.preDelay
+            utterance.postUtteranceDelay = segment.postDelay
+            utterance.prefersAssistiveTechnologySettings = false
+            synthesizer.speak(utterance)
+        }
+    }
+
+    func stop() {
+        _ = synthesizer.stopSpeaking(at: .immediate)
     }
 }
 

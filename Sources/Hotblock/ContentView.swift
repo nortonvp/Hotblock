@@ -435,19 +435,24 @@ private struct SettingsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Focus Voice")
                     .fontWeight(.medium)
-                Text("Choose between two natural English voices.")
+                Text("Choose between two more natural English voices.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
                 Picker(
                     "Focus Voice",
                     selection: Binding(
-                        get: { model.settings.voiceName },
+                        get: {
+                            model.settings.voiceIdentifier
+                                ?? model.englishVoices.first(where: { $0.name == model.settings.voiceName })?.id
+                                ?? model.englishVoices.first?.id
+                                ?? ""
+                        },
                         set: { model.setVoice($0) }
                     )
                 ) {
-                    ForEach(model.englishVoices, id: \.self) { voice in
-                        Text(model.voiceDisplayName(voice)).tag(voice)
+                    ForEach(model.englishVoices) { voice in
+                        Text(model.voiceDisplayName(voice)).tag(voice.id)
                     }
                 }
                 .labelsHidden()

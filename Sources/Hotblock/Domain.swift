@@ -36,7 +36,37 @@ enum BrowserPermission: String, Codable, Sendable {
 
 struct HotblockSettings: Codable, Equatable {
     var voiceName = "Samantha"
+    var voiceIdentifier: String?
     var volume = 80
+}
+
+struct SpeechVoiceOption: Identifiable, Equatable, Sendable {
+    let id: String
+    let name: String
+    let languageCode: String
+
+    var displayName: String {
+        "\(name) · \(Self.languageLabel(for: languageCode))"
+    }
+
+    private static func languageLabel(for code: String) -> String {
+        switch code {
+        case "en-US":
+            "US English"
+        case "en-GB":
+            "UK English"
+        case "en-AU":
+            "Australian English"
+        case "en-IE":
+            "Irish English"
+        case "en-IN":
+            "Indian English"
+        case "en-ZA":
+            "South African English"
+        default:
+            Locale(identifier: "en_US_POSIX").localizedString(forIdentifier: code) ?? code
+        }
+    }
 }
 
 struct HistoryEntry: Codable, Identifiable, Equatable {

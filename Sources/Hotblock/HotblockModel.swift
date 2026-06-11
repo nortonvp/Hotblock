@@ -17,7 +17,7 @@ final class HotblockModel: ObservableObject {
     @Published private(set) var settings: HotblockSettings
     @Published private(set) var installedBrowsers: [SupportedBrowser] = []
     @Published private(set) var browserPermissions: [SupportedBrowser: BrowserPermission] = [:]
-    @Published private(set) var englishVoices: [String] = ["Samantha", "Daniel"]
+    @Published private(set) var englishVoices: [SpeechVoiceOption] = SpeechService.englishVoices()
     @Published private(set) var notificationsAuthorized = false
     @Published private(set) var setupCompleted: Bool
     @Published var setupPresented = false
@@ -97,13 +97,19 @@ final class HotblockModel: ObservableObject {
             removeBackgroundProtection()
         }
 
-        let detectedVoices = await Task.detached(priority: .utility) {
-            SpeechService.englishVoices()
-        }.value
-        englishVoices = detectedVoices.isEmpty ? ["Samantha", "Daniel"] : detectedVoices
-        if !englishVoices.contains(settings.voiceName) {
-            settings.voiceName = englishVoices.first ?? "Samantha"
+        englishVoices = SpeechService.englishVoices()
+        if settings.voiceIdentifier == nil,
+           ["Samantha", "Daniel"].contains(settings.voiceName),
+           let upgradedVoice = englishVoices.first {
+            settings.voiceName = upgradedVoice.name
+            settings.voiceIdentifier = upgradedVoice.id
             syncAndPersist()
+        } else if let resolvedVoice = SpeechService.resolvedVoiceOption(for: settings, in: englishVoices) {
+            if settings.voiceIdentifier != resolvedVoice.id || settings.voiceName != resolvedVoice.name {
+                settings.voiceName = resolvedVoice.name
+                settings.voiceIdentifier = resolvedVoice.id
+                syncAndPersist()
+            }
         }
 
         notificationsAuthorized = await NotificationService.isAuthorized()
@@ -186,7 +192,9 @@ final class HotblockModel: ObservableObject {
 
     func setVoice(_ voice: String) {
         guard !isBlocking else { return }
-        settings.voiceName = voice
+        guard let option = englishVoices.first(where: { $0.id == voice }) else { return }
+        settings.voiceName = option.name
+        settings.voiceIdentifier = option.id
         syncAndPersist()
     }
 
@@ -197,17 +205,11 @@ final class HotblockModel: ObservableObject {
     }
 
     func testVoice() {
-        let currentSettings = settings
-        Task.detached {
-            SpeechService.shared.speak(
-                "You chose to focus. Let's get back to it.",
-                settings: currentSettings
-            )
-        }
+        SpeechService.shared.preview(settings: settings)
     }
 
-    func voiceDisplayName(_ voice: String) -> String {
-        SpeechService.displayName(for: voice)
+    func voiceDisplayName(_ voice: SpeechVoiceOption) -> String {
+        voice.displayName
     }
 
     func requestAllBrowserPermissions() async {
@@ -333,16 +335,14 @@ final class HotblockModel: ObservableObject {
             state.warningLevel = 0
         }
 
-        let message = Self.warningMessage(level: state.warningLevel, website: website)
+        let warningLevel = state.warningLevel
+        let message = Self.warningMessage(level: warningLevel, website: website)
         state.warningLevel = min(state.warningLevel + 1, 4)
         state.lastBlockedAttempt = now
         history.insert(HistoryEntry(timestamp: now, website: website), at: 0)
         syncAndPersist()
 
-        let currentSettings = settings
-        Task.detached {
-            SpeechService.shared.speak(message, settings: currentSettings)
-        }
+        SpeechService.shared.speakWarning(message, level: warningLevel, settings: settings)
     }
 
     private func notifyRepeatedly(key: String, title: String, body: String) {
@@ -455,15 +455,15 @@ final class HotblockModel: ObservableObject {
             .replacingOccurrences(of: "-", with: " ")
         switch level {
         case 0:
-            return "Stop. You chose to focus, not visit \(spokenWebsite)."
+            return "No. Not \(spokenWebsite) right now."
         case 1:
-            return "You are distracting yourself again. Get back to work."
+            return "Seriously? You opened \(spokenWebsite) again. Close it and get back to work."
         case 2:
-            return "Close this nonsense. You know exactly what you should be doing."
+            return "Come on. You asked me to stop you. Leave \(spokenWebsite) alone."
         case 3:
-            return "This is pathetic. Stop wasting your own time and focus."
+            return "We're doing this again? Close the tab, take a breath, and finish the task."
         default:
-            return "You are acting like a mindless doomscrolling robot. Get back to work now."
+            return "Enough. Stop negotiating with yourself and get back to work."
         }
     }
 }

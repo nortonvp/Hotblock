@@ -35,7 +35,7 @@ enum BrowserPermission: String, Codable, Sendable {
 }
 
 struct HotblockSettings: Codable, Equatable {
-    var voiceName = "Ava"
+    var voiceName = "Samantha"
     var volume = 80
 }
 

@@ -7,6 +7,8 @@
   --acid: #d9ff43;
   --window: #292927;
   --window-soft: #363633;
+  --sans: "Helvetica Neue", "Helvetica", sans-serif;
+  --serif: "Iowan Old Style", "Times New Roman", serif;
 }
 
 * {
@@ -25,7 +27,10 @@ body {
     linear-gradient(90deg, rgba(17, 17, 15, 0.035) 1px, transparent 1px),
     var(--paper);
   background-size: 48px 48px;
-  font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+  font-family: var(--sans);
+  font-weight: 400;
+  letter-spacing: -0.012em;
+  line-height: 1.55;
 }
 
 a {
@@ -59,15 +64,16 @@ button,
   align-items: center;
   gap: 9px;
   width: fit-content;
-  font-weight: 700;
-  letter-spacing: -0.04em;
+  font-weight: 600;
+  letter-spacing: -0.025em;
 }
 
 nav {
   display: flex;
   gap: 28px;
   font-size: 0.82rem;
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 nav a,
@@ -93,7 +99,8 @@ footer > a:hover {
   gap: 9px;
   border: 1px solid var(--ink);
   border-radius: 10px;
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
 }
 
@@ -147,8 +154,8 @@ footer > a:hover {
 .eyebrow {
   margin: 0 0 20px;
   font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  font-weight: 600;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
@@ -162,11 +169,11 @@ p {
 h1 {
   max-width: 620px;
   margin-bottom: 24px;
-  font-family: "Iowan Old Style", "Times New Roman", serif;
+  font-family: var(--serif);
   font-size: clamp(5rem, 10vw, 9.2rem);
   font-weight: 700;
   line-height: 0.79;
-  letter-spacing: -0.09em;
+  letter-spacing: -0.072em;
 }
 
 .hero-intro {
@@ -174,7 +181,8 @@ h1 {
   margin-bottom: 30px;
   color: #383834;
   font-size: 1.15rem;
-  line-height: 1.65;
+  line-height: 1.58;
+  letter-spacing: -0.015em;
 }
 
 .hero-actions {
@@ -185,7 +193,8 @@ h1 {
 
 .text-link {
   font-size: 0.86rem;
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .text-link span {
@@ -205,7 +214,7 @@ h1 {
 }
 
 .download-help a {
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -379,6 +388,7 @@ h1 {
 .app-heading h2 {
   margin: 0;
   font-size: 1.55rem;
+  letter-spacing: -0.035em;
 }
 
 .app-heading div,
@@ -400,6 +410,37 @@ h1 {
   cursor: pointer;
 }
 
+.app-window .preview-icon-button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+.app-window .presets-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  width: 38px;
+  height: 32px;
+  padding: 0 5px;
+}
+
+.presets-preview svg {
+  width: 15px;
+  height: 15px;
+  fill: #e9e9e5;
+}
+
+.presets-preview .preview-chevron {
+  width: 0;
+  height: 0;
+  border-top: 4px solid #aaa9a3;
+  border-right: 3px solid transparent;
+  border-left: 3px solid transparent;
+}
+
 .fake-input {
   flex: 1;
   padding: 7px 10px;
@@ -409,7 +450,7 @@ h1 {
 .list-title {
   margin: 22px 0 8px;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .blocked-list {
@@ -466,7 +507,7 @@ h1 {
   border-radius: 9px;
   box-shadow: 4px 4px 0 var(--ink);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   opacity: 0;
   transform: translateY(12px);
   animation: demo-warning 8s ease-in-out infinite;
@@ -506,15 +547,15 @@ h1 {
   margin: 0;
   color: #a7a59d;
   font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .proof-strip div {
   display: flex;
   gap: clamp(24px, 6vw, 80px);
-  font-family: "Iowan Old Style", serif;
+  font-family: var(--serif);
   font-size: 1.2rem;
   font-weight: 700;
 }
@@ -536,10 +577,10 @@ h1 {
 .section-heading h2,
 .voice-copy h2 {
   margin-bottom: 0;
-  font-family: "Iowan Old Style", serif;
+  font-family: var(--serif);
   font-size: clamp(3.4rem, 7vw, 6.5rem);
   line-height: 0.9;
-  letter-spacing: -0.075em;
+  letter-spacing: -0.058em;
 }
 
 .steps {
@@ -565,7 +606,7 @@ h1 {
 .step-number {
   display: block;
   margin-bottom: 90px;
-  font-family: "Iowan Old Style", serif;
+  font-family: var(--serif);
   font-size: 1.5rem;
   font-style: italic;
 }
@@ -574,14 +615,16 @@ h1 {
 .install-list h3 {
   margin-bottom: 10px;
   font-size: 1.1rem;
-  letter-spacing: -0.035em;
+  font-weight: 600;
+  letter-spacing: -0.018em;
 }
 
 .steps p,
 .install-list p,
 .voice-copy > p:last-child {
   color: var(--muted);
-  line-height: 1.7;
+  line-height: 1.62;
+  letter-spacing: -0.008em;
 }
 
 .voice-section {
@@ -609,11 +652,11 @@ h1 {
   position: relative;
   z-index: 2;
   margin: 150px 0 24px;
-  font-family: "Iowan Old Style", serif;
+  font-family: var(--serif);
   font-size: clamp(2rem, 4vw, 3.8rem);
   font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.06em;
+  letter-spacing: -0.045em;
 }
 
 .voice-card p {
@@ -621,7 +664,7 @@ h1 {
   z-index: 2;
   margin: 0;
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .sound-lines {
@@ -684,7 +727,8 @@ h1 {
   max-width: 440px;
   margin: 28px 0 0;
   color: var(--muted);
-  line-height: 1.7;
+  line-height: 1.62;
+  letter-spacing: -0.008em;
 }
 
 .install-list {
@@ -711,7 +755,7 @@ h1 {
   background: var(--ink);
   border-radius: 50%;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .install-list p {

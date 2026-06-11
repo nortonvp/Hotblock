@@ -139,7 +139,14 @@ enum BrowserAutomation {
     }
 }
 
-enum SpeechService {
+final class SpeechService: @unchecked Sendable {
+    static let shared = SpeechService()
+
+    private let lock = NSLock()
+    private var activeProcess: Process?
+
+    private init() {}
+
     nonisolated static func englishVoices() -> [String] {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/say")
@@ -149,27 +156,67 @@ enum SpeechService {
         process.standardError = Pipe()
 
         guard (try? process.run()) != nil else {
-            return ["Samantha"]
+            return ["Samantha", "Daniel"]
         }
         process.waitUntilExit()
 
         let data = outputPipe.fileHandleForReading.readDataToEndOfFile()
         let output = String(data: data, encoding: .utf8) ?? ""
         let voices = output.split(separator: "\n").compactMap { line -> String? in
-            guard line.contains("en_") || line.contains("en-") else { return nil }
-            return line.split(whereSeparator: \.isWhitespace).first.map(String.init)
+            let fields = line.split(whereSeparator: \.isWhitespace)
+            guard let localeIndex = fields.firstIndex(where: {
+                $0.hasPrefix("en_") || $0.hasPrefix("en-")
+            }), localeIndex > 0 else {
+                return nil
+            }
+            return fields[..<localeIndex].joined(separator: " ")
         }
-        return Array(Set(voices)).sorted()
+        let available = Set(voices)
+        let preferred = ["Ava", "Samantha", "Daniel", "Moira", "Karen", "Tessa"]
+        return Array(preferred.filter(available.contains).prefix(2))
     }
 
-    nonisolated static func speak(_ message: String, settings: HotblockSettings) {
+    nonisolated static func displayName(for voice: String) -> String {
+        switch voice {
+        case "Ava": "Ava · American English"
+        case "Samantha": "Samantha · American English"
+        case "Daniel": "Daniel · British English"
+        case "Moira": "Moira · Irish English"
+        case "Karen": "Karen · Australian English"
+        case "Tessa": "Tessa · South African English"
+        default: voice
+        }
+    }
+
+    nonisolated func speak(_ message: String, settings: HotblockSettings) {
+        lock.lock()
+        defer { lock.unlock() }
+
+        if let activeProcess, activeProcess.isRunning {
+            activeProcess.terminate()
+            activeProcess.waitUntilExit()
+        }
+
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/say")
         let volume = Double(min(max(settings.volume, 0), 100)) / 100
         process.arguments = ["-v", settings.voiceName, "[[volm \(volume)]] \(message)"]
         process.standardOutput = Pipe()
         process.standardError = Pipe()
-        try? process.run()
+        guard (try? process.run()) != nil else {
+            activeProcess = nil
+            return
+        }
+        activeProcess = process
+    }
+
+    nonisolated func stop() {
+        lock.lock()
+        defer { lock.unlock() }
+        if let activeProcess, activeProcess.isRunning {
+            activeProcess.terminate()
+        }
+        activeProcess = nil
     }
 }
 
@@ -208,7 +255,7 @@ enum AdministratorRecovery {
     }
 }
 
-struct BackgroundProtection {
+struct BackgroundProtection: Sendable {
     private let label = "com.nortonvp.hotblock.keepalive"
     private let fileName = "com.nortonvp.hotblock.keepalive.plist"
 

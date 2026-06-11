@@ -198,24 +198,43 @@ private struct PresetConfirmationView: View {
 private struct StartSessionView: View {
     @ObservedObject var model: HotblockModel
     @Binding var isPresented: Bool
-    @State private var wordCount = 3
+    @State private var wordCount: Double
+
+    init(model: HotblockModel, isPresented: Binding<Bool>) {
+        self.model = model
+        _isPresented = isPresented
+        _wordCount = State(initialValue: Double(model.unlockWordCount))
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 18) {
             Text("Start Strict Session")
                 .font(.headline)
 
             Text("Choose how many random words you must type to stop blocking.")
+                .foregroundStyle(.secondary)
 
-            Text("Unlock words: \(wordCount)")
+            HStack(alignment: .firstTextBaseline) {
+                Text("Unlock challenge")
+                    .fontWeight(.medium)
+                Spacer()
+                Text("\(roundedWordCount) words")
+                    .font(.title3.monospacedDigit())
+                    .fontWeight(.semibold)
+            }
+
             Slider(
-                value: Binding(
-                    get: { Double(wordCount) },
-                    set: { wordCount = Int($0.rounded()) }
-                ),
-                in: 1...100,
-                step: 1
+                value: $wordCount,
+                in: 1...100
             )
+
+            HStack {
+                Text("1")
+                Spacer()
+                Text("100")
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
 
             HStack {
                 Spacer()
@@ -223,14 +242,18 @@ private struct StartSessionView: View {
                     isPresented = false
                 }
                 Button("Start") {
-                    model.startBlocking(unlockWordCount: wordCount)
+                    model.startBlocking(unlockWordCount: roundedWordCount)
                     isPresented = false
                 }
                 .keyboardShortcut(.defaultAction)
             }
         }
         .padding(20)
-        .frame(width: 380)
+        .frame(width: 420)
+    }
+
+    private var roundedWordCount: Int {
+        Int(wordCount.rounded())
     }
 }
 
@@ -343,18 +366,28 @@ private struct SettingsView: View {
             Text("Settings")
                 .font(.headline)
 
-            Picker(
-                "English Voice",
-                selection: Binding(
-                    get: { model.settings.voiceName },
-                    set: { model.setVoice($0) }
-                )
-            ) {
-                ForEach(model.englishVoices, id: \.self) { voice in
-                    Text(voice).tag(voice)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Focus Voice")
+                    .fontWeight(.medium)
+                Text("Choose between two natural English voices.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Picker(
+                    "Focus Voice",
+                    selection: Binding(
+                        get: { model.settings.voiceName },
+                        set: { model.setVoice($0) }
+                    )
+                ) {
+                    ForEach(model.englishVoices, id: \.self) { voice in
+                        Text(model.voiceDisplayName(voice)).tag(voice)
+                    }
                 }
+                .labelsHidden()
+                .pickerStyle(.radioGroup)
+                .disabled(model.isBlocking)
             }
-            .disabled(model.isBlocking)
 
             Text("Volume: \(model.settings.volume)%")
             Slider(
@@ -374,7 +407,7 @@ private struct SettingsView: View {
             }
 
             HStack {
-                Button("Test Voice") {
+                Button("Preview Voice") {
                     model.testVoice()
                 }
                 Button("Setup Assistant") {

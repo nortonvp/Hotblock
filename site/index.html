@@ -61,14 +61,22 @@
             <div class="app-heading">
               <h2>Hotblock</h2>
               <div>
-                <button aria-label="History">◷</button>
-                <button aria-label="Settings">⚙</button>
+                <button class="preview-icon-button" aria-label="History">◷</button>
+                <button class="preview-icon-button" aria-label="Settings">⚙</button>
               </div>
             </div>
             <div class="add-row">
               <div class="fake-input">instagram.com</div>
               <button>Add</button>
-              <button aria-label="Presets">▦⌄</button>
+              <button class="presets-preview" aria-label="Presets">
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <rect x="2" y="2" width="4" height="4" rx="0.7"/>
+                  <rect x="10" y="2" width="4" height="4" rx="0.7"/>
+                  <rect x="2" y="10" width="4" height="4" rx="0.7"/>
+                  <rect x="10" y="10" width="4" height="4" rx="0.7"/>
+                </svg>
+                <span class="preview-chevron" aria-hidden="true"></span>
+              </button>
             </div>
             <p class="list-title">Blocked Websites</p>
             <div class="blocked-list">
@@ -135,7 +143,7 @@
         <p class="eyebrow">Not another silent blocker</p>
         <h2>It talks back.</h2>
         <p>
-          Pick an English macOS voice and volume. Every repeated attempt raises
+          Choose between two natural English voices. Every repeated attempt raises
           the shared warning level until you finally get the hint.
         </p>
       </div>

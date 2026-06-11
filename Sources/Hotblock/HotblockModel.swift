@@ -9,6 +9,7 @@ final class HotblockModel: ObservableObject {
     @Published var draftWebsite = ""
     @Published private(set) var websites: [String]
     @Published private(set) var isBlocking: Bool
+    @Published private(set) var unlockWordCount: Int
     @Published private(set) var unlockWords: [String]
     @Published var unlockAttempt = ""
     @Published private(set) var unlockError = ""
@@ -16,7 +17,7 @@ final class HotblockModel: ObservableObject {
     @Published private(set) var settings: HotblockSettings
     @Published private(set) var installedBrowsers: [SupportedBrowser] = []
     @Published private(set) var browserPermissions: [SupportedBrowser: BrowserPermission] = [:]
-    @Published private(set) var englishVoices: [String] = ["Ava"]
+    @Published private(set) var englishVoices: [String] = ["Samantha", "Daniel"]
     @Published private(set) var notificationsAuthorized = false
     @Published private(set) var setupCompleted: Bool
     @Published var setupPresented = false
@@ -27,6 +28,7 @@ final class HotblockModel: ObservableObject {
     private let backgroundProtection = BackgroundProtection()
     private var monitoringTask: Task<Void, Never>?
     private var feedbackTask: Task<Void, Never>?
+    private var backgroundProtectionTask: Task<Void, Never>?
     private var lastHandledHost: String?
     private var lastNotificationAt: [String: Date] = [:]
 
@@ -41,6 +43,7 @@ final class HotblockModel: ObservableObject {
         state = loaded
         websites = loaded.websites
         isBlocking = loaded.isBlocking
+        unlockWordCount = loaded.unlockWordCount
         unlockWords = loaded.unlockWords
         history = loaded.history.sorted { $0.timestamp > $1.timestamp }
         settings = loaded.settings
@@ -88,18 +91,18 @@ final class HotblockModel: ObservableObject {
         setupPresented = !setupCompleted
 
         if isBlocking {
-            _ = backgroundProtection.install()
+            installBackgroundProtection()
             startMonitoring()
         } else {
-            backgroundProtection.remove()
+            removeBackgroundProtection()
         }
 
         let detectedVoices = await Task.detached(priority: .utility) {
             SpeechService.englishVoices()
         }.value
-        englishVoices = detectedVoices.isEmpty ? ["Ava"] : detectedVoices
+        englishVoices = detectedVoices.isEmpty ? ["Samantha", "Daniel"] : detectedVoices
         if !englishVoices.contains(settings.voiceName) {
-            settings.voiceName = englishVoices.first ?? "Ava"
+            settings.voiceName = englishVoices.first ?? "Samantha"
             syncAndPersist()
         }
 
@@ -143,19 +146,15 @@ final class HotblockModel: ObservableObject {
             return
         }
 
-        state.unlockWordCount = min(max(unlockWordCount, 1), 100)
-        unlockWords = Self.randomWords(count: state.unlockWordCount)
+        self.unlockWordCount = min(max(unlockWordCount, 1), 100)
+        state.unlockWordCount = self.unlockWordCount
+        unlockWords = Self.randomWords(count: self.unlockWordCount)
         unlockAttempt = ""
         unlockError = ""
         isBlocking = true
         syncAndPersist()
 
-        if !backgroundProtection.install() {
-            NotificationService.send(
-                title: "Hotblock protection needs attention",
-                body: "Background relaunch protection could not be installed."
-            )
-        }
+        installBackgroundProtection()
         startMonitoring()
     }
 
@@ -200,8 +199,15 @@ final class HotblockModel: ObservableObject {
     func testVoice() {
         let currentSettings = settings
         Task.detached {
-            SpeechService.speak("This is your Hotblock focus voice.", settings: currentSettings)
+            SpeechService.shared.speak(
+                "You chose to focus. Let's get back to it.",
+                settings: currentSettings
+            )
         }
+    }
+
+    func voiceDisplayName(_ voice: String) -> String {
+        SpeechService.displayName(for: voice)
     }
 
     func requestAllBrowserPermissions() async {
@@ -258,7 +264,8 @@ final class HotblockModel: ObservableObject {
         state.lastBlockedAttempt = nil
         monitoringTask?.cancel()
         monitoringTask = nil
-        backgroundProtection.remove()
+        SpeechService.shared.stop()
+        removeBackgroundProtection()
         syncAndPersist()
     }
 
@@ -334,7 +341,7 @@ final class HotblockModel: ObservableObject {
 
         let currentSettings = settings
         Task.detached {
-            SpeechService.speak(message, settings: currentSettings)
+            SpeechService.shared.speak(message, settings: currentSettings)
         }
     }
 
@@ -350,6 +357,7 @@ final class HotblockModel: ObservableObject {
     private func syncAndPersist() {
         state.websites = websites
         state.isBlocking = isBlocking
+        state.unlockWordCount = unlockWordCount
         state.unlockWords = unlockWords
         state.history = history
         state.settings = settings
@@ -368,6 +376,29 @@ final class HotblockModel: ObservableObject {
             try? await Task.sleep(for: .seconds(3))
             guard !Task.isCancelled else { return }
             self?.feedback = ""
+        }
+    }
+
+    private func installBackgroundProtection() {
+        let protection = backgroundProtection
+        let previousTask = backgroundProtectionTask
+        backgroundProtectionTask = Task.detached(priority: .utility) {
+            await previousTask?.value
+            if !protection.install() {
+                NotificationService.send(
+                    title: "Hotblock protection needs attention",
+                    body: "Background relaunch protection could not be installed."
+                )
+            }
+        }
+    }
+
+    private func removeBackgroundProtection() {
+        let protection = backgroundProtection
+        let previousTask = backgroundProtectionTask
+        backgroundProtectionTask = Task.detached(priority: .utility) {
+            await previousTask?.value
+            protection.remove()
         }
     }
 

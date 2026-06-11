@@ -223,9 +223,9 @@ private struct StartSessionView: View {
                     .fontWeight(.semibold)
             }
 
-            Slider(
+            SmoothWordCountSlider(
                 value: $wordCount,
-                in: 1...100
+                range: 1...100
             )
 
             HStack {
@@ -254,6 +254,72 @@ private struct StartSessionView: View {
 
     private var roundedWordCount: Int {
         Int(wordCount.rounded())
+    }
+}
+
+private struct SmoothWordCountSlider: View {
+    @Binding var value: Double
+    let range: ClosedRange<Double>
+
+    var body: some View {
+        GeometryReader { geometry in
+            let thumbDiameter = 16.0
+            let trackWidth = max(geometry.size.width - thumbDiameter, 1)
+            let progress = min(max((value - range.lowerBound) / rangeLength, 0), 1)
+
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(.tertiary)
+                    .frame(height: 4)
+                    .padding(.horizontal, thumbDiameter / 2)
+
+                Capsule()
+                    .fill(.secondary)
+                    .frame(width: trackWidth * progress, height: 4)
+                    .offset(x: thumbDiameter / 2)
+
+                Circle()
+                    .fill(.secondary)
+                    .frame(width: thumbDiameter, height: thumbDiameter)
+                    .overlay {
+                        Circle()
+                            .stroke(.primary.opacity(0.2), lineWidth: 1)
+                    }
+                    .position(
+                        x: thumbDiameter / 2 + trackWidth * progress,
+                        y: geometry.size.height / 2
+                    )
+            }
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { gesture in
+                        let progress = min(
+                            max((gesture.location.x - thumbDiameter / 2) / trackWidth, 0),
+                            1
+                        )
+                        value = range.lowerBound + progress * rangeLength
+                    }
+            )
+        }
+        .frame(height: 20)
+        .accessibilityElement()
+        .accessibilityLabel("Unlock challenge word count")
+        .accessibilityValue("\(Int(value.rounded())) words")
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment:
+                value = min(value.rounded() + 1, range.upperBound)
+            case .decrement:
+                value = max(value.rounded() - 1, range.lowerBound)
+            @unknown default:
+                break
+            }
+        }
+    }
+
+    private var rangeLength: Double {
+        range.upperBound - range.lowerBound
     }
 }
 

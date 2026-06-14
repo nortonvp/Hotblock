@@ -247,6 +247,10 @@ h1 {
   transform: translateY(0);
 }
 
+.download-notice [hidden] {
+  display: none;
+}
+
 .download-notice strong {
   font-size: 0.86rem;
 }
@@ -256,6 +260,10 @@ h1 {
   color: #aaa9a3;
   font-size: 0.72rem;
   line-height: 1.45;
+}
+
+.copy-site-link {
+  cursor: pointer;
 }
 
 .download-notice .button-small {

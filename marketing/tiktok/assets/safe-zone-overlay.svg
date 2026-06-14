@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <rect width="1080" height="1920" fill="none"/>
+  <path d="M0 0h1080v180H0zM0 1620h1080v300H0zM900 180h180v1440H900z" fill="#ff3b30" fill-opacity=".22"/>
+  <rect x="70" y="230" width="760" height="1320" rx="24" fill="none" stroke="#d9ff43" stroke-width="8" stroke-dasharray="24 18"/>
+  <text x="90" y="300" fill="#d9ff43" font-family="Helvetica, sans-serif" font-size="38" font-weight="700">KEEP HOOKS + CAPTIONS INSIDE</text>
+  <text x="920" y="900" fill="#ffffff" font-family="Helvetica, sans-serif" font-size="30" font-weight="700" transform="rotate(90 920 900)">TIKTOK CONTROLS</text>
+  <text x="540" y="1780" fill="#ffffff" font-family="Helvetica, sans-serif" font-size="30" font-weight="700" text-anchor="middle">CAPTION + NAVIGATION AREA</text>
+</svg>

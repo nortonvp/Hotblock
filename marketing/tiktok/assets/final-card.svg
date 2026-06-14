@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <rect width="1080" height="1920" fill="#f1efe8"/>
+  <path d="M0 180h1080M0 1740h1080" stroke="#11110f" stroke-opacity=".15"/>
+  <circle cx="540" cy="740" r="310" fill="#d9ff43" stroke="#11110f" stroke-width="8"/>
+  <circle cx="540" cy="740" r="230" fill="none" stroke="#11110f" stroke-opacity=".18" stroke-width="5"/>
+  <text x="540" y="700" fill="#11110f" font-family="Georgia, serif" font-size="150" font-weight="700" text-anchor="middle">Stop</text>
+  <text x="540" y="845" fill="#11110f" font-family="Georgia, serif" font-size="150" font-weight="700" text-anchor="middle">opening it.</text>
+  <text x="540" y="1260" fill="#11110f" font-family="Helvetica, sans-serif" font-size="54" font-weight="700" text-anchor="middle">FREE FOR MAC</text>
+  <rect x="170" y="1335" width="740" height="150" rx="28" fill="#11110f"/>
+  <text x="540" y="1433" fill="#f1efe8" font-family="Helvetica, sans-serif" font-size="72" font-weight="700" text-anchor="middle">hotblock.app</text>
+  <text x="540" y="1575" fill="#6e6d66" font-family="Helvetica, sans-serif" font-size="38" text-anchor="middle">Open it on your Mac</text>
+</svg>

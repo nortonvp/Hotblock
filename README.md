@@ -7,7 +7,7 @@ Supported browsers: Safari, Google Chrome, Brave Browser, and Arc.
 
 ## Download
 
-Visit the [Hotblock website](https://nortonvp.github.io/Hotblock/) or download
+Visit the [Hotblock website](https://hotblock.app/) or download
 the [latest release](https://github.com/nortonvp/Hotblock/releases/latest/download/Hotblock.dmg).
 
 ## Install the GitHub Beta

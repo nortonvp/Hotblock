@@ -59,8 +59,10 @@ struct ContentView: View {
                 } label: {
                     Image(systemName: "square.grid.2x2")
                         .frame(width: 16, height: 16)
+                        .padding(.horizontal, 8)
                 }
-                .frame(minWidth: 46, minHeight: 30)
+                .menuIndicator(.hidden)
+                .controlSize(.regular)
                 .help("Presets: add a built-in group of websites")
             }
 

@@ -1,3 +1,4 @@
+import Sliders
 import SwiftUI
 
 struct ContentView: View {
@@ -57,9 +58,9 @@ struct ContentView: View {
                     }
                 } label: {
                     Image(systemName: "square.grid.2x2")
+                        .frame(width: 16, height: 16)
                 }
-                .frame(width: 38)
-                .fixedSize()
+                .frame(minWidth: 46, minHeight: 30)
                 .help("Presets: add a built-in group of websites")
             }
 
@@ -198,12 +199,12 @@ private struct PresetConfirmationView: View {
 private struct StartSessionView: View {
     @ObservedObject var model: HotblockModel
     @Binding var isPresented: Bool
-    @State private var wordCount: Double
+    @State private var wordCount: Int
 
     init(model: HotblockModel, isPresented: Binding<Bool>) {
         self.model = model
         _isPresented = isPresented
-        _wordCount = State(initialValue: Double(model.unlockWordCount))
+        _wordCount = State(initialValue: model.unlockWordCount)
     }
 
     var body: some View {
@@ -214,27 +215,18 @@ private struct StartSessionView: View {
             Text("Choose how many random words you must type to stop blocking.")
                 .foregroundStyle(.secondary)
 
-            HStack(alignment: .firstTextBaseline) {
-                Text("Unlock challenge")
-                    .fontWeight(.medium)
-                Spacer()
-                Text("\(roundedWordCount) words")
-                    .font(.title3.monospacedDigit())
-                    .fontWeight(.semibold)
-            }
-
-            SmoothWordCountSlider(
+            HotblockSliderCard(
+                title: "Unlock challenge",
+                icon: "text.badge.plus",
+                accent: .red,
+                minimumLabel: "1",
+                maximumLabel: "300",
+                accessibilityLabel: "Unlock challenge word count",
+                valueText: "\(wordCount) words",
                 value: $wordCount,
-                range: 1...100
+                range: 1...300,
+                step: 1
             )
-
-            HStack {
-                Text("1")
-                Spacer()
-                Text("100")
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
 
             HStack {
                 Spacer()
@@ -242,7 +234,7 @@ private struct StartSessionView: View {
                     isPresented = false
                 }
                 Button("Start") {
-                    model.startBlocking(unlockWordCount: roundedWordCount)
+                    model.startBlocking(unlockWordCount: wordCount)
                     isPresented = false
                 }
                 .keyboardShortcut(.defaultAction)
@@ -251,75 +243,91 @@ private struct StartSessionView: View {
         .padding(20)
         .frame(width: 420)
     }
-
-    private var roundedWordCount: Int {
-        Int(wordCount.rounded())
-    }
 }
 
-private struct SmoothWordCountSlider: View {
-    @Binding var value: Double
-    let range: ClosedRange<Double>
+private struct HotblockSliderCard: View {
+    let title: String
+    let icon: String
+    let accent: Color
+    let minimumLabel: String
+    let maximumLabel: String
+    let accessibilityLabel: String
+    let valueText: String
+    @Binding var value: Int
+    let range: ClosedRange<Int>
+    let step: Int
+    var isEnabled = true
 
     var body: some View {
-        GeometryReader { geometry in
-            let thumbDiameter = 16.0
-            let trackWidth = max(geometry.size.width - thumbDiameter, 1)
-            let progress = min(max((value - range.lowerBound) / rangeLength, 0), 1)
-
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(.tertiary)
-                    .frame(height: 4)
-                    .padding(.horizontal, thumbDiameter / 2)
-
-                Capsule()
-                    .fill(.secondary)
-                    .frame(width: trackWidth * progress, height: 4)
-                    .offset(x: thumbDiameter / 2)
-
-                Circle()
-                    .fill(.secondary)
-                    .frame(width: thumbDiameter, height: thumbDiameter)
-                    .overlay {
-                        Circle()
-                            .stroke(.primary.opacity(0.2), lineWidth: 1)
-                    }
-                    .position(
-                        x: thumbDiameter / 2 + trackWidth * progress,
-                        y: geometry.size.height / 2
-                    )
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                Image(systemName: icon)
+                    .foregroundStyle(accent)
+                Text(title)
+                    .fontWeight(.medium)
+                Spacer()
+                Text(valueText)
+                    .font(.caption.monospacedDigit())
+                    .fontWeight(.semibold)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(accent.opacity(0.14), in: Capsule())
             }
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { gesture in
-                        let progress = min(
-                            max((gesture.location.x - thumbDiameter / 2) / trackWidth, 0),
-                            1
-                        )
-                        value = range.lowerBound + progress * rangeLength
-                    }
+
+            ValueSlider(
+                value: $value,
+                in: range,
+                step: step
             )
-        }
-        .frame(height: 20)
-        .accessibilityElement()
-        .accessibilityLabel("Unlock challenge word count")
-        .accessibilityValue("\(Int(value.rounded())) words")
-        .accessibilityAdjustableAction { direction in
-            switch direction {
-            case .increment:
-                value = min(value.rounded() + 1, range.upperBound)
-            case .decrement:
-                value = max(value.rounded() - 1, range.lowerBound)
-            @unknown default:
-                break
-            }
-        }
-    }
+            .valueSliderStyle(
+                HorizontalValueSliderStyle(
+                    track:
+                        LinearGradient(
+                            colors: [accent.opacity(0.35), accent],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(height: 8)
+                        .background(
+                            Capsule()
+                                .fill(accent.opacity(0.12))
+                        )
+                        .clipShape(Capsule()),
+                    thumb:
+                        Circle()
+                        .fill(.background)
+                        .overlay(
+                            Circle()
+                                .stroke(accent, lineWidth: 2)
+                        )
+                        .shadow(color: accent.opacity(0.24), radius: 6, y: 1),
+                    thumbSize: CGSize(width: 18, height: 18),
+                    thumbInteractiveSize: CGSize(width: 28, height: 28),
+                    options: .interactiveTrack
+                )
+            )
+            .frame(height: 28)
+            .disabled(!isEnabled)
+            .accessibilityLabel(accessibilityLabel)
+            .accessibilityValue(valueText)
 
-    private var rangeLength: Double {
-        range.upperBound - range.lowerBound
+            HStack {
+                Text(minimumLabel)
+                Spacer()
+                Text(maximumLabel)
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(accent.opacity(0.08))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(accent.opacity(0.16), lineWidth: 1)
+        )
     }
 }
 
@@ -460,16 +468,22 @@ private struct SettingsView: View {
                 .disabled(model.isBlocking)
             }
 
-            Text("Volume: \(model.settings.volume)%")
-            Slider(
+            HotblockSliderCard(
+                title: "Volume",
+                icon: "speaker.wave.2.fill",
+                accent: .orange,
+                minimumLabel: "0",
+                maximumLabel: "100",
+                accessibilityLabel: "Voice volume",
+                valueText: "\(model.settings.volume)%",
                 value: Binding(
-                    get: { Double(model.settings.volume) },
-                    set: { model.setVolume(Int($0.rounded())) }
+                    get: { model.settings.volume },
+                    set: { model.setVolume($0) }
                 ),
-                in: 0...100,
-                step: 1
+                range: 0...100,
+                step: 1,
+                isEnabled: !model.isBlocking
             )
-            .disabled(model.isBlocking)
 
             if model.isBlocking {
                 Text("Voice settings are locked during a strict session.")

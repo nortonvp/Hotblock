@@ -35,7 +35,7 @@ final class HotblockModel: ObservableObject {
     private init() {
         var loaded = persistence.load()
         loaded.websites = Array(Set(loaded.websites)).sorted()
-        loaded.unlockWordCount = min(max(loaded.unlockWordCount, 1), 100)
+        loaded.unlockWordCount = min(max(loaded.unlockWordCount, 1), 300)
         if loaded.isBlocking && loaded.unlockWords.isEmpty {
             loaded.unlockWords = Self.randomWords(count: loaded.unlockWordCount)
         }
@@ -152,7 +152,7 @@ final class HotblockModel: ObservableObject {
             return
         }
 
-        self.unlockWordCount = min(max(unlockWordCount, 1), 100)
+        self.unlockWordCount = min(max(unlockWordCount, 1), 300)
         state.unlockWordCount = self.unlockWordCount
         unlockWords = Self.randomWords(count: self.unlockWordCount)
         unlockAttempt = ""

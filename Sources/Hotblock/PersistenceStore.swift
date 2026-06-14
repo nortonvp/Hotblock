@@ -30,7 +30,7 @@ final class PersistenceStore {
         var state = PersistedState()
         state.websites = defaults.stringArray(forKey: Key.legacyWebsites) ?? []
         state.isBlocking = defaults.bool(forKey: Key.legacyIsBlocking)
-        state.unlockWordCount = min(max(defaults.integer(forKey: Key.legacyUnlockWordCount), 1), 100)
+        state.unlockWordCount = min(max(defaults.integer(forKey: Key.legacyUnlockWordCount), 1), 300)
         state.unlockWords = defaults.stringArray(forKey: Key.legacyUnlockWords) ?? []
         state.setupCompleted = hasLegacyState
         return state
